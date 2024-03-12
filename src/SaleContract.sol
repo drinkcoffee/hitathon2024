@@ -11,12 +11,26 @@ contract SaleContract is Power {
 
   IERC20 gameToken;
 
-  constructor(
-      address gameTokenAddr,
-      uint256 totalAmountToSell,
-      uint256 initialPrice,
-      uint256 raiseTarget,
-      uint256 endTime) {
+  uint256 currentSupply;
+
+  constructor(address gameTokenAddr) {
+    gameToken = IERC20(gameTokenAddr);
+    currentSupply = 0;
+  }
+
+  function buy() public payable returns (uint256, uint256) {
+    uint256 toPay = msg.value;
+    uint256 tokenObtained = calculatePurchaseReturn(currentSupply, address(this).balance, 100000, toPay);
+    currentSupply += tokenObtained;
+    if (!gameToken.transfer(msg.sender, tokenObtained)) {
+      revert("Fail to transfer tokens");
+    }
+    return (tokenObtained, toPay.div(tokenObtained));
+  }
+
+  function estimateCurrentPrice(uint256 toPay) public view returns (uint256, uint256) {
+    uint256 tokenObtained = calculatePurchaseReturn(currentSupply, address(this).balance, 100000, toPay);
+    return (tokenObtained, toPay.div(tokenObtained));
   }
 
   function calculatePurchaseReturn(
